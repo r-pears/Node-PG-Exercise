@@ -21,7 +21,7 @@ router.get('/', async function (req, res, next) {
   }
 });
 
-// Get a specific company based on id
+// Get details about a specific company based on id
 router.get('/:code', async function (req, res, next) {
   try {
     let code = req.params.code;
@@ -33,11 +33,21 @@ router.get('/:code', async function (req, res, next) {
       [code]
     );
 
+    const invoiceResult = await db.query(
+      `SELECT id
+      FROM invoices
+      WHERE comp_code = $1`,
+      [code]
+    );
+
     if (companyResult.rows.length === 0) {
       throw new ExpressError(`No company exist with id: ${code}`, 404)
     }
 
     const company = companyResult.rows[0];
+    const invoices = invoiceResult.rows;
+
+    company.invoices = invoices.map(invoice => invoice.id);
 
     return res.json({ 'company': company });
   } catch (error) {
